@@ -1,0 +1,2268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - MapZest</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary-green: #00c853;
+            --primary-dark: #1b3b2f;
+            --bg-color: #f9f9f9;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --radius: 12px;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            --nav-height: 64px;
+        }
+
+        body.dark-mode {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --border-color: #333333;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Navbar */
+        header {
+            background: var(--card-bg);
+            height: var(--nav-height);
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .brand {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            list-style: none;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: color 0.2s;
+            padding: 8px 0;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--primary-green);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-green);
+            border-radius: 2px;
+        }
+
+        /* Nav Right */
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--text-main);
+        }
+
+        /* Profile Dropdown */
+        .profile-dropdown {
+            position: relative;
+        }
+
+        .profile-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px;
+            border-radius: 20px;
+            transition: background 0.2s;
+        }
+
+        .profile-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--primary-green);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .profile-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--card-bg);
+            min-width: 200px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--border-color);
+            padding: 8px 0;
+            display: none;
+            z-index: 1100;
+            margin-top: 12px;
+        }
+
+        .profile-dropdown.active .profile-menu {
+            display: block;
+            animation: slideDown 0.2s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-item {
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 14px;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(0, 200, 83, 0.08);
+        }
+
+        .user-info {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 4px;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 14px;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            border: none;
+            font-family: 'Inter', sans-serif;
+            text-decoration: none;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            background: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        .btn-primary {
+            background: var(--primary-green);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #00a844;
+            transform: translateY(-1px);
+        }
+
+        /* Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            min-height: 240px;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            border-color: var(--border-color);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .card-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            color: var(--border-color);
+            margin-bottom: 16px;
+        }
+
+        .empty-state-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .empty-state-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            max-width: 240px;
+            line-height: 1.5;
+        }
+
+        /* Specific Card Styles */
+        .map-card {
+            padding: 0;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 240px;
+            /* Match base card min-height */
+        }
+
+        #fieldsMap {
+            width: 100%;
+            flex: 1;
+            /* This makes the map fill all available vertical space */
+            min-height: 240px;
+            /* Ensure minimum height matches card */
+        }
+
+        .map-overlay-btn {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            background: var(--card-bg);
+            padding: 10px 14px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            cursor: pointer;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+
+        .map-overlay-btn:hover {
+            background: var(--primary-green);
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(0, 200, 83, 0.3);
+        }
+
+        /* Fullscreen map styles */
+        .map-card:fullscreen {
+            background: #000;
+        }
+
+        .map-card:fullscreen #fieldsMap {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .map-card:fullscreen .map-overlay-btn {
+            bottom: 24px;
+            right: 24px;
+        }
+
+        /* Field number labels */
+        .field-number-label {
+            cursor: pointer;
+        }
+
+        .field-number-label:hover div {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .crop-data-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 16px 0;
+        }
+
+        .crop-data-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .crop-header-right {
+            margin-left: auto;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .view-all-link {
+            margin-top: auto;
+            align-self: flex-start;
+            color: var(--primary-green);
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Disease Advice List */
+        .disease-list {
+            width: 100%;
+        }
+
+        .disease-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .dot-red {
+            background-color: #ff5252;
+        }
+
+        .dot-orange {
+            background-color: #ffb74d;
+        }
+
+        .dot-green {
+            background-color: #66bb6a;
+        }
+
+        .dot-grey {
+            background-color: #e0e0e0;
+        }
+
+        .chart-container {
+            width: 100px;
+            height: 100px;
+            margin-right: 24px;
+        }
+
+        .disease-layout {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0 16px;
+        }
+
+        /* ============================================== */
+        /* IRRIGATION CALENDAR CARD STYLES (NEW) */
+        /* ============================================== */
+        .irrigation-list {
+            width: 100%;
+            height: 100%;
+            /* Change 1: height full kar do */
+            max-height: 300px;
+            /* Change 2: max-height limit hata do ya full kar do */
+            overflow-y: auto;
+            padding-right: 4px;
+            margin-top: 5px;
+        }
+
+        /* Scrollbar */
+        .irrigation-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .irrigation-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .irrigation-list::-webkit-scrollbar-thumb {
+            background-color: var(--border-color);
+            border-radius: 4px;
+        }
+
+        .irrigation-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .irrigation-item:hover {
+            border-color: var(--primary-green);
+            transform: translateX(2px);
+        }
+
+        .irr-date {
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--text-main);
+            display: block;
+        }
+
+        .irr-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 2px;
+        }
+
+        .irr-status {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+        }
+
+        .status-urgent {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .status-high {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .status-medium {
+            background: #fff8e1;
+            color: #f9a825;
+        }
+
+        .status-low {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        /* ============================================== */
+        /* MAXIMIZE MODAL STYLES */
+        /* ============================================== */
+        .maximize-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .maximize-btn:hover {
+            background: rgba(0, 200, 83, 0.1);
+            color: var(--primary-green);
+            transform: scale(1.1);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        body.dark-mode .modal-overlay {
+            background: rgba(0, 0, 0, 0.85);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 1000px;
+            max-height: 85vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.3s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-color);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .modal-title i {
+            color: var(--primary-green);
+            font-size: 24px;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-size: 20px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 0, 0, 0.1);
+            color: #ff4444;
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-body::-webkit-scrollbar-track {
+            background: var(--bg-color);
+            border-radius: 4px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Enhanced irrigation item for modal */
+        .irrigation-item-modal {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .irrigation-item-modal:hover {
+            border-color: var(--primary-green);
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0, 200, 83, 0.15);
+        }
+
+        .irrigation-item-modal .irr-date {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text-main);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .irrigation-item-modal .irr-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .irrigation-item-modal .irr-status {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 16px;
+            text-transform: uppercase;
+        }
+
+        /* Enhanced chart container for modal */
+        .modal-chart-container {
+            background: var(--bg-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .modal-stat-card {
+            background: var(--bg-color);
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .modal-stat-card:hover {
+            border-color: var(--primary-green);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 200, 83, 0.1);
+        }
+
+        .modal-stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .modal-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-green);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                padding: 0 16px;
+            }
+
+            .nav-left {
+                gap: 20px;
+            }
+
+            .brand span {
+                display: none;
+            }
+
+            .modal-content {
+                width: 95%;
+                max-height: 90vh;
+            }
+
+            .modal-header {
+                padding: 16px;
+            }
+
+            .modal-body {
+                padding: 16px;
+            }
+
+            .modal-stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="nav-left">
+            <a href="/" class="brand" style="display:flex; align-items:center; gap:8px; text-decoration:none;">
+                <img src="./static/logo.png" alt="MapZest Logo" style="height:32px; width:auto;">
+
+            </a>
+
+            <ul class="nav-links">
+                <li><a href="/" class="nav-link active">Dashboard</a></li>
+                <li><a href="/fields" class="nav-link">Fields</a></li>
+            </ul>
+        </div>
+
+        <div class="nav-right">
+            <button class="theme-toggle" id="themeToggle" title="Toggle Dark Mode">
+                <i class="fas fa-moon"></i>
+            </button>
+
+            <div class="profile-dropdown">
+                <button class="profile-btn">
+                    <div class="avatar">
+                        {{ user.name[0] if user.name else user.email[0] | upper }}
+                    </div>
+                </button>
+                <div class="profile-menu">
+                    <div class="user-info">
+                        <div class="user-name">{{ user.name if user.name else 'User' }}</div>
+                        <div class="user-email">{{ user.email }}</div>
+                    </div>
+                    <a href="/logout" class="dropdown-item">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Dashboard</h1>
+            <div class="header-actions">
+
+                <button class="btn btn-primary" onclick="window.location.href='/create_field'">
+                    <i class="fas fa-plus"></i> New
+                </button>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+
+            <div class="card" style="display: flex; flex-direction: column; overflow: hidden;">
+                <div class="card-header" style="justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-calendar-check card-icon"></i>
+                        <span class="card-title">Irrigation Calendar</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span id="irrigationBadge"
+                            style="font-size: 10px; background: #f5f5f5; color: #666; padding: 2px 8px; border-radius: 10px; border: 1px solid #ddd;">
+                            Checking...
+                        </span>
+                        <button class="maximize-btn" onclick="maximizeIrrigation()" title="Maximize">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card-body"
+                    style="padding: 0; flex: 1; display: flex; flex-direction: column; min-height: 200px;">
+
+                    <div id="irrigationLoader"
+                        style="display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">
+                        <i class="fas fa-circle-notch fa-spin"
+                            style="color: var(--primary-green); font-size: 24px; margin-bottom: 10px;"></i>
+                        <p style="font-size: 12px; color: #666;">Fetching Recent Field Data...</p>
+                    </div>
+
+                    <div id="irrigationEmpty"
+                        style="display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;">
+                        <i class="fas fa-cloud-rain" style="font-size: 32px; color: #e0e0e0; margin-bottom: 10px;"></i>
+                        <div style="font-size: 14px; font-weight: 600; color: var(--text-main);">No Recent AOI Found
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">Please go to 'Fields' and draw a
+                            polygon first.</div>
+                    </div>
+
+                    <div id="irrigationContent"
+                        style="display: none; flex: 1; width: 100%; overflow-y: auto; padding: 10px;">
+                        <div id="irrigationList" class="irrigation-list">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="display: flex; flex-direction: column; overflow: hidden;">
+                <div class="card-header" style="justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-chart-line card-icon"></i>
+                        <span class="card-title">Crop Health</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span id="cropHealthBadge"
+                            style="font-size: 10px; background: #f5f5f5; color: #666; padding: 2px 8px; border-radius: 10px; border: 1px solid #ddd;">
+                            Checking...
+                        </span>
+                        <button class="maximize-btn" onclick="maximizeCropHealth()" title="Maximize">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card-body"
+                    style="padding: 0; flex: 1; display: flex; flex-direction: column; min-height: 200px;">
+
+                    <div id="cropHealthLoader"
+                        style="display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">
+                        <i class="fas fa-circle-notch fa-spin"
+                            style="color: var(--primary-green); font-size: 24px; margin-bottom: 10px;"></i>
+                        <p style="font-size: 12px; color: #666;">Loading Crop Health...</p>
+                    </div>
+
+                    <div id="cropHealthEmpty"
+                        style="display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;">
+                        <i class="fas fa-leaf" style="font-size: 32px; color: #e0e0e0; margin-bottom: 10px;"></i>
+                        <div style="font-size: 14px; font-weight: 600; color: var(--text-main);">No Crop Data
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">Generate crop health analysis in
+                            Fields.</div>
+                    </div>
+
+                    <div id="cropHealthContent" style="display: none; flex: 1; width: 100%; padding: 16px;">
+                        <div style="margin-bottom: 12px;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">NDVI
+                                    Trend</span>
+                                <span id="ndviAverage"
+                                    style="font-size: 13px; font-weight: 700; color: var(--primary-green);">0.00</span>
+                            </div>
+                            <canvas id="cropHealthMiniChart" style="max-height: 100px;"></canvas>
+                        </div>
+
+                        <div id="vegCoverSection" style="margin-bottom: 12px; display: none;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">
+                                    <i class="fas fa-chart-pie" style="margin-right: 4px;"></i>Vegetation Cover
+                                </span>
+                            </div>
+                            <div
+                                style="height: 120px; width: 100%; position: relative; display: flex; justify-content: center; align-items: center;">
+                                <canvas id="vegCoverMiniPieChart"></canvas>
+                            </div>
+                            <div id="vegCoverMiniLegend"
+                                style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 8px; font-size: 10px;">
+                            </div>
+                        </div>
+
+                        <div
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px; color: var(--text-secondary); padding-top: 8px; border-top: 1px solid var(--border-color);">
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-main);" id="cropHealthDates">-</div>
+                                <div>Date Range</div>
+                            </div>
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-main);" id="cropHealthDataPoints">0
+                                </div>
+                                <div>Data Points</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card map-card">
+                <div id="fieldsMap"></div>
+                <div class="map-overlay-btn" onclick="openFullscreenMap()" title="Toggle Fullscreen">
+                    <i class="fas fa-expand"></i>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-virus card-icon"></i>
+                    <span class="card-title">Disease Advice</span>
+                </div>
+                <div class="card-body" style="flex-direction: row; justify-content: flex-start;">
+                    <div class="disease-layout">
+                        <div class="chart-container">
+                            <canvas id="diseaseChart"></canvas>
+                        </div>
+                        <div class="disease-list">
+                            <div class="disease-item">
+                                <span><span class="status-dot dot-red"></span>Spray now</span>
+                                <span>0 ></span>
+                            </div>
+                            <div class="disease-item">
+                                <span><span class="status-dot dot-orange"></span>Consider action</span>
+                                <span>0 ></span>
+                            </div>
+                            <div class="disease-item">
+                                <span><span class="status-dot dot-green"></span>All clear</span>
+                                <span>0 ></span>
+                            </div>
+                            <div class="disease-item">
+                                <span><span class="status-dot dot-grey"></span>No advice</span>
+                                <span id="noAdviceCount">0 ></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <a href="#" class="view-all-link">View all</a>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-seedling card-icon"></i>
+                    <span class="card-title">Crops</span>
+                    <span class="crop-header-right" id="totalAreaText">Total: 0 acre</span>
+                </div>
+                <div class="card-body">
+                    <div class="crop-data-value" id="fieldCount">0</div>
+                    <div class="crop-data-label">Empty</div>
+                </div>
+                <a href="/fields" class="view-all-link">View All</a>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-user-check card-icon"></i>
+                    <span class="card-title">Recommendations</span>
+                </div>
+                <div class="card-body">
+                    <i class="far fa-clipboard empty-state-icon"></i>
+                    <div class="empty-state-title">No Recommendations</div>
+                    <div class="empty-state-text">Here you will see recommendations from your dealer</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-tint card-icon"></i>
+                    <span class="card-title">Soil Moisture Status</span>
+                </div>
+                <div class="card-body">
+                    <i class="fas fa-layer-group empty-state-icon"></i>
+                    <div class="empty-state-title">Install a Sensor</div>
+                    <div class="empty-state-text">Need to install/register a sensor?</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-wifi card-icon"></i>
+                    <span class="card-title">Sensors</span>
+                </div>
+                <div class="card-body">
+                    <i class="far fa-calendar-alt empty-state-icon"></i>
+                    <div class="empty-state-title">No Active Sensors</div>
+                    <div class="empty-state-text">Need to install/register a sensor? Please use the MapZest mobile app
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="irrigationModal" class="modal-overlay" onclick="closeIrrigationModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Irrigation Calendar</span>
+                </div>
+                <button class="modal-close" onclick="closeIrrigationModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="irrigationModalBody">
+            </div>
+        </div>
+    </div>
+
+    <div id="cropHealthModal" class="modal-overlay" onclick="closeCropHealthModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Crop Health Analysis</span>
+                </div>
+                <button class="modal-close" onclick="closeCropHealthModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="cropHealthModalBody">
+            </div>
+        </div>
+    </div>
+
+    <div id="vegCoverModal" class="modal-overlay" onclick="closeVegCoverModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Vegetation Cover Analysis</span>
+                </div>
+                <button class="modal-close" onclick="closeVegCoverModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="vegCoverModalBody">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark Mode Logic
+        const themeToggle = document.getElementById('themeToggle');
+        const icon = themeToggle.querySelector('i');
+
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+
+            if (isDark) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        });
+
+        // Profile Dropdown Logic
+        const profileBtn = document.querySelector('.profile-btn');
+        const profileDropdown = document.querySelector('.profile-dropdown');
+
+        profileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!profileDropdown.contains(e.target)) {
+                profileDropdown.classList.remove('active');
+            }
+        });
+
+        // Initialize map
+        const map = L.map('fieldsMap', {
+            zoomControl: false,
+            attributionControl: false
+        }).setView([20.5937, 78.9629], 3);
+
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19
+        }).addTo(map);
+
+        // Force map to recalculate size after DOM is fully loaded
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 100);
+
+        // Fullscreen function
+        function openFullscreenMap() {
+            const mapCard = document.querySelector('.map-card');
+            const btn = document.querySelector('.map-overlay-btn i');
+
+            if (!document.fullscreenElement) {
+                if (mapCard.requestFullscreen) {
+                    mapCard.requestFullscreen();
+                } else if (mapCard.webkitRequestFullscreen) {
+                    mapCard.webkitRequestFullscreen();
+                } else if (mapCard.msRequestFullscreen) {
+                    mapCard.msRequestFullscreen();
+                }
+                btn.classList.remove('fa-expand');
+                btn.classList.add('fa-compress');
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                btn.classList.remove('fa-compress');
+                btn.classList.add('fa-expand');
+            }
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 100);
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            const btn = document.querySelector('.map-overlay-btn i');
+            if (!document.fullscreenElement) {
+                btn.classList.remove('fa-compress');
+                btn.classList.add('fa-expand');
+            }
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 100);
+        });
+
+        // Chart Plugin
+        const centerTextPlugin = {
+            id: 'centerText',
+            beforeDraw: function (chart) {
+                if (chart.config.type !== 'doughnut') return;
+                var width = chart.width,
+                    height = chart.height,
+                    ctx = chart.ctx;
+
+                ctx.restore();
+                var fontSize = (height / 80).toFixed(2);
+                ctx.font = "bold " + fontSize + "em sans-serif";
+                ctx.textBaseline = "middle";
+                ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text-main');
+
+                var text = chart.config.options.centerText || '0',
+                    textX = Math.round((width - ctx.measureText(text).width) / 2),
+                    textY = height / 2;
+
+                ctx.fillText(text, textX, textY);
+                ctx.save();
+            }
+        };
+
+        // Load and display fields
+        async function loadFields() {
+            try {
+                const response = await fetch('/api/get_fields');
+                const fields = await response.json();
+
+                const count = fields.length;
+                document.getElementById('fieldCount').textContent = count;
+                document.getElementById('noAdviceCount').textContent = `${count} >`;
+
+                let totalArea = 0;
+                fields.forEach(f => totalArea += (f.areaAcres || 0));
+                document.getElementById('totalAreaText').textContent = `Total: ${totalArea.toFixed(1)} acre`;
+
+                updateChart(count);
+
+                if (fields.length > 0) {
+                    const bounds = [];
+                    fields.forEach((field, index) => {
+                        let layer;
+                        const fieldNumber = index + 1;
+                        if (field.type === 'circle') {
+                            layer = L.circle(field.geometry.center, {
+                                radius: field.geometry.radius,
+                                color: 'white',
+                                weight: 2,
+                                fillOpacity: 0
+                            }).addTo(map);
+                            bounds.push(field.geometry.center);
+
+                            L.marker(field.geometry.center, {
+                                icon: L.divIcon({
+                                    className: 'field-number-label',
+                                    html: `<div style="background: rgba(0,200,83,0.95); color: white; padding: 6px 12px; border-radius: 16px; font-weight: bold; font-size: 14px; box-shadow: 0 3px 8px rgba(0,0,0,0.4); transition: all 0.2s; cursor: pointer; border: 2px solid white;">${fieldNumber}</div>`,
+                                    iconSize: [40, 40]
+                                })
+                            }).addTo(map).on('click', () => {
+                                window.location.href = `/app2?field_id=${field.id}`;
+                            });
+
+                        } else {
+                            layer = L.geoJSON(field.geometry, {
+                                style: {
+                                    color: 'white',
+                                    weight: 2,
+                                    fillOpacity: 0
+                                }
+                            }).addTo(map);
+                            const coords = field.geometry.coordinates[0];
+                            coords.forEach(coord => {
+                                bounds.push([coord[1], coord[0]]);
+                            });
+                            const center = layer.getBounds().getCenter();
+                            L.marker(center, {
+                                icon: L.divIcon({
+                                    className: 'field-number-label',
+                                    html: `<div style="background: rgba(0,200,83,0.95); color: white; padding: 6px 12px; border-radius: 16px; font-weight: bold; font-size: 14px; box-shadow: 0 3px 8px rgba(0,0,0,0.4); transition: all 0.2s; cursor: pointer; border: 2px solid white;">${fieldNumber}</div>`,
+                                    iconSize: [40, 40]
+                                })
+                            }).addTo(map).on('click', () => {
+                                window.location.href = `/app2?field_id=${field.id}`;
+                            });
+                        }
+                        layer.on('click', () => {
+                            window.location.href = `/app2?field_id=${field.id}`;
+                        });
+                    });
+                    map.fitBounds(bounds, { padding: [20, 20] });
+                }
+            } catch (error) {
+                console.error('Error loading fields:', error);
+            }
+        }
+
+        function updateChart(totalFields) {
+            const ctx = document.getElementById('diseaseChart').getContext('2d');
+            if (window.diseaseChartInstance) {
+                window.diseaseChartInstance.destroy();
+            }
+            window.diseaseChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['No advice', 'Other'],
+                    datasets: [{
+                        data: [totalFields, 0],
+                        backgroundColor: ['#e0e0e0', '#ffffff'],
+                        borderWidth: 0,
+                        cutout: '80%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    centerText: totalFields.toString(),
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    }
+                },
+                plugins: [centerTextPlugin]
+            });
+        }
+
+        // ==============================================
+        //  NEW: IRRIGATION CALENDAR LOGIC FOR DASHBOARD
+        // ==============================================
+
+        async function loadRecentIrrigation() {
+            const loader = document.getElementById('irrigationLoader');
+            const empty = document.getElementById('irrigationEmpty');
+            const content = document.getElementById('irrigationContent');
+            const list = document.getElementById('irrigationList');
+            const badge = document.getElementById('irrigationBadge');
+
+            // 1. Check Local Storage for Last Irrigation Calendar (saved from app2.html)
+            const storedCalendar = localStorage.getItem('lastIrrigationCalendar');
+
+            if (!storedCalendar) {
+                empty.style.display = 'flex';
+                content.style.display = 'none';
+                loader.style.display = 'none';
+                badge.textContent = "No Data";
+                badge.style.backgroundColor = "#f5f5f5";
+                badge.style.color = "#666";
+                badge.style.borderColor = "#ddd";
+                return;
+            }
+
+            try {
+                // 2. Reset UI
+                empty.style.display = 'none';
+                content.style.display = 'none';
+                loader.style.display = 'flex';
+                badge.textContent = "Loading...";
+
+                // 3. Parse stored irrigation calendar data
+                const data = JSON.parse(storedCalendar);
+
+                loader.style.display = 'none';
+
+                if (data.success && data.calendar && data.calendar.length > 0) {
+                    // Show Data
+                    content.style.display = 'block';
+                    badge.textContent = "Recent Activity";
+                    badge.style.backgroundColor = "#e8f5e9";
+                    badge.style.color = "#2e7d32";
+                    badge.style.borderColor = "#c8e6c9";
+
+                    renderDashboardCalendar(data.calendar, list);
+                } else {
+                    // No Irrigation needed
+                    empty.innerHTML = `
+                        <i class="fas fa-check-circle" style="font-size: 32px; color: #4caf50; margin-bottom: 10px;"></i>
+                        <div style="font-size: 14px; font-weight: 600;">No Irrigation Needed</div>
+                        <div style="font-size: 12px; color: #666;">Soil moisture is good for now!</div>
+                    `;
+                    empty.style.display = 'flex';
+                    badge.textContent = "Healthy";
+                    badge.style.backgroundColor = "#e8f5e9";
+                    badge.style.color = "#2e7d32";
+                    badge.style.borderColor = "#c8e6c9";
+                }
+
+            } catch (error) {
+                console.error("Dashboard Irrigation Error:", error);
+                loader.style.display = 'none';
+                empty.style.display = 'flex';
+                empty.innerHTML = `
+                    <i class="fas fa-exclamation-triangle" style="font-size: 32px; color: #ff9800; margin-bottom: 10px;"></i>
+                    <div style="font-size: 14px; font-weight: 600;">Data Error</div>
+                    <div style="font-size: 12px; color: #666;">Could not load irrigation calendar.</div>
+                `;
+                badge.textContent = "Error";
+                badge.style.backgroundColor = "#fff3e0";
+                badge.style.color = "#ef6c00";
+                badge.style.borderColor = "#ffb74d";
+            }
+        }
+
+        // Helper function to render list items
+        function renderDashboardCalendar(calendarData, container) {
+            container.innerHTML = '';
+
+            // Sort by date descending
+            const sorted = calendarData.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // Show top 10 items
+            sorted.slice(0, 10).forEach(day => {
+
+                let statusClass = 'status-low';
+                let icon = 'fa-check';
+                let iconColor = '#2e7d32';
+
+                if (day.priority === 'URGENT') {
+                    statusClass = 'status-urgent';
+                    icon = 'fa-tint';
+                    iconColor = '#c62828';
+                } else if (day.priority === 'HIGH') {
+                    statusClass = 'status-high';
+                    icon = 'fa-exclamation-circle';
+                    iconColor = '#ef6c00';
+                } else if (day.priority === 'MEDIUM') {
+                    statusClass = 'status-medium';
+                    icon = 'fa-info-circle';
+                    iconColor = '#f9a825';
+                }
+
+                const html = `
+                    <div class="irrigation-item">
+                        <div>
+                            <span class="irr-date">${day.date}</span>
+                            <div class="irr-desc">
+                                <i class="fas ${icon}" style="color: ${iconColor};"></i>
+                                ${day.advice.substring(0, 30)}${day.advice.length > 30 ? '...' : ''}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="irr-status ${statusClass}">${day.priority}</div>
+                            <div style="font-size: 10px; color: #999; margin-top: 3px;">
+                                SM: ${day.soil_moisture_percent}%
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        // ==============================================
+        //  NEW: CROP HEALTH LOGIC FOR DASHBOARD
+        // ==============================================
+
+        let cropHealthChart = null;
+
+        async function loadCropHealth() {
+            const loader = document.getElementById('cropHealthLoader');
+            const empty = document.getElementById('cropHealthEmpty');
+            const content = document.getElementById('cropHealthContent');
+            const badge = document.getElementById('cropHealthBadge');
+
+            // 1. Check Local Storage for Last Crop Health Data (saved from app2.html)
+            const storedData = localStorage.getItem('lastCropHealthData');
+
+            if (!storedData) {
+                empty.style.display = 'flex';
+                content.style.display = 'none';
+                loader.style.display = 'none';
+                badge.textContent = "No Data";
+                badge.style.backgroundColor = "#f5f5f5";
+                badge.style.color = "#666";
+                badge.style.borderColor = "#ddd";
+                return;
+            }
+
+            try {
+                // 2. Reset UI
+                empty.style.display = 'none';
+                content.style.display = 'none';
+                loader.style.display = 'flex';
+                badge.textContent = "Loading...";
+
+                // 3. Parse stored crop health data
+                const cropHealthData = JSON.parse(storedData);
+                const data = cropHealthData.data;
+
+                loader.style.display = 'none';
+
+                if (data && data.length > 0) {
+                    // Show Data
+                    content.style.display = 'block';
+                    badge.textContent = "Recent Activity";
+                    badge.style.backgroundColor = "#e8f5e9";
+                    badge.style.color = "#2e7d32";
+                    badge.style.borderColor = "#c8e6c9";
+
+                    // Calculate NDVI average
+                    const ndviValues = data.map(d => d.ndvi).filter(v => v !== null && v !== undefined);
+                    const avgNdvi = ndviValues.length > 0
+                        ? (ndviValues.reduce((a, b) => a + b, 0) / ndviValues.length).toFixed(3)
+                        : '0.000';
+
+                    // Update stats
+                    document.getElementById('ndviAverage').textContent = avgNdvi;
+                    document.getElementById('cropHealthDataPoints').textContent = data.length;
+
+                    // Format dates
+                    const startDate = new Date(cropHealthData.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    const endDate = new Date(cropHealthData.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    document.getElementById('cropHealthDates').textContent = `${startDate} - ${endDate}`;
+
+                    // Render mini NDVI chart
+                    renderCropHealthMiniChart(data);
+
+                    // Load and render vegetation cover pie chart
+                    const landCoverData = localStorage.getItem('lastLandCoverData');
+                    if (landCoverData) {
+                        try {
+                            const parsedLandCover = JSON.parse(landCoverData);
+                            if (parsedLandCover.data && parsedLandCover.data.length > 0) {
+                                const latestData = parsedLandCover.data[parsedLandCover.data.length - 1];
+                                document.getElementById('vegCoverSection').style.display = 'block';
+                                renderVegCoverMiniPieChart(latestData);
+                            }
+                        } catch (e) {
+                            console.warn('Failed to load vegetation cover data:', e);
+                        }
+                    }
+                } else {
+                    // No data
+                    empty.innerHTML = `
+                        <i class="fas fa-leaf" style="font-size: 32px; color: #e0e0e0; margin-bottom: 10px;"></i>
+                        <div style="font-size: 14px; font-weight: 600;">No Crop Data</div>
+                        <div style="font-size: 12px; color: #666;">Generate crop health analysis in Fields.</div>
+                    `;
+                    empty.style.display = 'flex';
+                    badge.textContent = "No Data";
+                    badge.style.backgroundColor = "#f5f5f5";
+                    badge.style.color = "#666";
+                    badge.style.borderColor = "#ddd";
+                }
+
+            } catch (error) {
+                console.error("Dashboard Crop Health Error:", error);
+                loader.style.display = 'none';
+                empty.style.display = 'flex';
+                empty.innerHTML = `
+                    <i class="fas fa-exclamation-triangle" style="font-size: 32px; color: #ff9800; margin-bottom: 10px;"></i>
+                    <div style="font-size: 14px; font-weight: 600;">Data Error</div>
+                    <div style="font-size: 12px; color: #666;">Could not load crop health data.</div>
+                `;
+                badge.textContent = "Error";
+                badge.style.backgroundColor = "#fff3e0";
+                badge.style.color = "#ef6c00";
+                badge.style.borderColor = "#ffb74d";
+            }
+        }
+
+        function renderCropHealthMiniChart(data) {
+            const ctx = document.getElementById('cropHealthMiniChart');
+            if (!ctx) return;
+
+            // Destroy existing chart
+            if (cropHealthChart) {
+                cropHealthChart.destroy();
+            }
+
+            // Prepare data - take last 30 points or all if less
+            const chartData = data.slice(-30);
+            const labels = chartData.map(d => {
+                const date = new Date(d.date);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            const ndviData = chartData.map(d => d.ndvi);
+
+            // Create gradient
+            const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 100);
+            gradient.addColorStop(0, 'rgba(0, 200, 83, 0.3)');
+            gradient.addColorStop(1, 'rgba(0, 200, 83, 0.05)');
+
+            cropHealthChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'NDVI',
+                        data: ndviData,
+                        borderColor: 'rgb(0, 200, 83)',
+                        backgroundColor: gradient,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        pointHoverBackgroundColor: 'rgb(0, 200, 83)',
+                        pointHoverBorderColor: '#fff',
+                        pointHoverBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 8,
+                            cornerRadius: 4,
+                            titleFont: {
+                                size: 11
+                            },
+                            bodyFont: {
+                                size: 11
+                            },
+                            callbacks: {
+                                label: function (context) {
+                                    return 'NDVI: ' + context.parsed.y.toFixed(3);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            display: true,
+                            grid: {
+                                display: true,
+                                drawBorder: false,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 9
+                                },
+                                color: '#999',
+                                maxTicksLimit: 4,
+                                callback: function (value) {
+                                    return value.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        let vegCoverMiniChart = null;
+
+        function renderVegCoverMiniPieChart(data) {
+            const ctx = document.getElementById('vegCoverMiniPieChart');
+            if (!ctx) return;
+
+            // Destroy existing chart
+            if (vegCoverMiniChart) {
+                vegCoverMiniChart.destroy();
+            }
+
+            const percentages = data.percentages;
+            const labels = ["Dense Veg", "Sparse Veg", "Water", "Bare Land", "Built-up"];
+            const values = [
+                percentages["Dense Vegetation"] || 0,
+                percentages["Sparse Vegetation"] || 0,
+                percentages["Water"] || 0,
+                percentages["Bare Land"] || 0,
+                percentages["Built-up"] || 0,
+            ];
+            const colors = ["#43a047", "#c0ca33", "#1e88e5", "#8d6e63", "#78909c"];
+
+            vegCoverMiniChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors,
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 8,
+                            cornerRadius: 6,
+                            titleFont: {
+                                size: 11
+                            },
+                            bodyFont: {
+                                size: 10
+                            },
+                            callbacks: {
+                                label: function (context) {
+                                    return `${context.label}: ${context.parsed}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Render Legend
+            const legendContainer = document.getElementById('vegCoverMiniLegend');
+            legendContainer.innerHTML = '';
+            labels.forEach((label, index) => {
+                if (values[index] > 0) {
+                    const item = document.createElement('div');
+                    item.style.display = 'flex';
+                    item.style.alignItems = 'center';
+                    item.style.gap = '4px';
+                    item.innerHTML = `
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background-color: ${colors[index]};"></span>
+                        <span>${label}: ${values[index]}%</span>
+                    `;
+                    legendContainer.appendChild(item);
+                }
+            });
+        }
+
+        // ==============================================
+        //  MODAL MAXIMIZE FUNCTIONS
+        // ==============================================
+
+        let modalCropHealthChart = null;
+        let modalVegetationPieChart = null;
+
+        function maximizeIrrigation() {
+            const storedCalendar = localStorage.getItem('lastIrrigationCalendar');
+            if (!storedCalendar) {
+                alert('No irrigation calendar data available');
+                return;
+            }
+
+            try {
+                const data = JSON.parse(storedCalendar);
+                const modal = document.getElementById('irrigationModal');
+                const modalBody = document.getElementById('irrigationModalBody');
+
+                if (data.success && data.calendar && data.calendar.length > 0) {
+                    // Render enhanced irrigation calendar in modal
+                    let html = '';
+
+                    // Calendar items (removed summary stats)
+                    html += '<div>';
+                    data.calendar.forEach(day => {
+                        let statusClass = 'status-low';
+                        let icon = 'fa-check';
+                        let iconColor = '#2e7d32';
+
+                        if (day.priority === 'URGENT') {
+                            statusClass = 'status-urgent';
+                            icon = 'fa-tint';
+                            iconColor = '#c62828';
+                        } else if (day.priority === 'HIGH') {
+                            statusClass = 'status-high';
+                            icon = 'fa-exclamation-circle';
+                            iconColor = '#ef6c00';
+                        } else if (day.priority === 'MEDIUM') {
+                            statusClass = 'status-medium';
+                            icon = 'fa-info-circle';
+                            iconColor = '#f9a825';
+                        }
+
+                        html += `
+                            <div class="irrigation-item-modal">
+                                <div style="flex: 1;">
+                                    <span class="irr-date">${day.date}</span>
+                                    <div class="irr-desc">
+                                        <i class="fas ${icon}" style="color: ${iconColor};"></i>
+                                        ${day.advice}
+                                    </div>
+                                    <div style="display: flex; gap: 16px; margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                                        <span><i class="fas fa-cloud-rain"></i> Rain: ${day.rain_mm}mm</span>
+                                        <span><i class="fas fa-tint"></i> SM: ${day.soil_moisture_percent}%</span>
+                                        <span><i class="fas fa-thermometer-half"></i> CWSI: ${day.cwsi_mean}</span>
+                                        <span><i class="fas fa-droplet"></i> Need: ${day.final_irrigation_mm}mm</span>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div class="irr-status ${statusClass}">${day.priority}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+
+                    modalBody.innerHTML = html;
+                    modal.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                }
+            } catch (error) {
+                console.error('Error displaying irrigation modal:', error);
+                alert('Error loading irrigation calendar');
+            }
+        }
+
+        function closeIrrigationModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            const modal = document.getElementById('irrigationModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function maximizeCropHealth() {
+            const storedData = localStorage.getItem('lastCropHealthData');
+            if (!storedData) {
+                alert('No crop health data available');
+                return;
+            }
+
+            try {
+                const cropHealthData = JSON.parse(storedData);
+                const data = cropHealthData.data;
+                const modal = document.getElementById('cropHealthModal');
+                const modalBody = document.getElementById('cropHealthModalBody');
+
+                if (data && data.length > 0) {
+                    // Calculate statistics
+                    const ndviValues = data.map(d => d.ndvi).filter(v => v !== null && v !== undefined);
+                    const saviValues = data.map(d => d.savi).filter(v => v !== null && v !== undefined);
+                    const eviValues = data.map(d => d.evi).filter(v => v !== null && v !== undefined);
+                    const laiValues = data.map(d => d.lai).filter(v => v !== null && v !== undefined);
+
+                    const avgNdvi = ndviValues.length > 0 ? (ndviValues.reduce((a, b) => a + b, 0) / ndviValues.length).toFixed(3) : '0.000';
+                    const avgSavi = saviValues.length > 0 ? (saviValues.reduce((a, b) => a + b, 0) / saviValues.length).toFixed(3) : '0.000';
+                    const avgEvi = eviValues.length > 0 ? (eviValues.reduce((a, b) => a + b, 0) / eviValues.length).toFixed(3) : '0.000';
+                    const avgLai = laiValues.length > 0 ? (laiValues.reduce((a, b) => a + b, 0) / laiValues.length).toFixed(2) : '0.00';
+
+                    const startDate = new Date(cropHealthData.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const endDate = new Date(cropHealthData.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+                    // Get vegetation cover data from localStorage (land cover analysis)
+                    let vegetationCover = null;
+                    const landCoverData = localStorage.getItem('lastLandCoverData');
+                    if (landCoverData) {
+                        try {
+                            const parsedData = JSON.parse(landCoverData);
+                            if (parsedData.data && parsedData.data.length > 0) {
+                                const latestData = parsedData.data[parsedData.data.length - 1];
+                                vegetationCover = {
+                                    percentages: latestData.percentages,
+                                    period: latestData.period
+                                };
+                            }
+                        } catch (e) {
+                            console.warn('Failed to parse land cover data:', e);
+                        }
+                    }
+
+                    // Render enhanced crop health in modal
+                    let html = `
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="modal-chart-container">
+                                <h3 style="margin-bottom: 16px; color: var(--text-main); font-size: 16px;">
+                                    <i class="fas fa-chart-line" style="color: var(--primary-green);"></i>
+                                    NDVI Trend (${startDate} - ${endDate})
+                                </h3>
+                                <canvas id="modalCropHealthChart" style="max-height: 400px;"></canvas>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 20px;">
+                                <div style="background: var(--bg-color); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color);">
+                                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; font-size: 13px;">
+                                        <div>
+                                            <div style="color: var(--text-secondary); margin-bottom: 4px;">Data Points</div>
+                                            <div style="font-weight: 700; color: var(--text-main);">${data.length}</div>
+                                        </div>
+                                        <div>
+                                            <div style="color: var(--text-secondary); margin-bottom: 4px;">Date Range</div>
+                                            <div style="font-weight: 700; color: var(--text-main); font-size: 11px;">${startDate} - ${endDate}</div>
+                                        </div>
+                                        <div>
+                                            <div style="color: var(--text-secondary); margin-bottom: 4px;">Min NDVI</div>
+                                            <div style="font-weight: 700; color: var(--text-main);">${Math.min(...ndviValues).toFixed(3)}</div>
+                                        </div>
+                                        <div>
+                                            <div style="color: var(--text-secondary); margin-bottom: 4px;">Max NDVI</div>
+                                            <div style="font-weight: 700; color: var(--text-main);">${Math.max(...ndviValues).toFixed(3)}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                ${vegetationCover ? `
+                                <div class="modal-chart-container" style="flex: 1;">
+                                    <h3 style="margin-bottom: 16px; color: var(--text-main); font-size: 16px;">
+                                        <i class="fas fa-chart-pie" style="color: var(--primary-green);"></i>
+                                        Vegetation Cover
+                                    </h3>
+                                    <div style="height: 280px; position: relative;">
+                                        <canvas id="modalVegetationPieChart"></canvas>
+                                    </div>
+                                </div>
+                                ` : ''}
+
+                                </div>
+                        </div>
+
+                    `;
+
+                    modalBody.innerHTML = html;
+                    modal.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+
+                    // Render the charts after modal is visible
+                    setTimeout(() => {
+                        renderModalCropHealthChart(data);
+                        renderVegetationPieChart(vegetationCover);
+                    }, 100);
+                }
+            } catch (error) {
+                console.error('Error displaying crop health modal:', error);
+                alert('Error loading crop health data');
+            }
+        }
+
+        function renderVegetationPieChart(vegetationCover) {
+            const ctx = document.getElementById('modalVegetationPieChart');
+            if (!ctx) return;
+
+            // Destroy existing chart
+            if (modalVegetationPieChart) {
+                modalVegetationPieChart.destroy();
+            }
+
+            // If no vegetation cover data, show placeholder
+            if (!vegetationCover || !vegetationCover.percentages) {
+                ctx.getContext('2d').fillStyle = 'var(--text-secondary)';
+                ctx.getContext('2d').font = '14px sans-serif';
+                ctx.getContext('2d').textAlign = 'center';
+                ctx.getContext('2d').fillText('No vegetation data available', ctx.width / 2, ctx.height / 2);
+                return;
+            }
+
+            const percentages = vegetationCover.percentages;
+            const labels = ["Dense Vegetation", "Sparse Vegetation", "Water", "Bare Land", "Built-up"];
+            const values = [
+                percentages["Dense Vegetation"] || 0,
+                percentages["Sparse Vegetation"] || 0,
+                percentages["Water"] || 0,
+                percentages["Bare Land"] || 0,
+                percentages["Built-up"] || 0,
+            ];
+            const colors = ["#43a047", "#c0ca33", "#1e88e5", "#8d6e63", "#78909c"];
+
+            modalVegetationPieChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors,
+                        borderColor: 'var(--card-bg)',
+                        borderWidth: 3,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                color: 'var(--text-main)',
+                                padding: 15,
+                                font: {
+                                    size: 12,
+                                    weight: '600'
+                                },
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            cornerRadius: 8,
+                            titleFont: {
+                                size: 13,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 12
+                            },
+                            callbacks: {
+                                label: function (context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    return label + ': ' + value.toFixed(1) + '%';
+                                }
+                            }
+                        }
+                    },
+                    cutout: '60%',
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true,
+                        duration: 1000,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+        }
+
+        function closeCropHealthModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            const modal = document.getElementById('cropHealthModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+
+            // Destroy charts
+            if (modalCropHealthChart) {
+                modalCropHealthChart.destroy();
+                modalCropHealthChart = null;
+            }
+            if (modalVegetationPieChart) {
+                modalVegetationPieChart.destroy();
+                modalVegetationPieChart = null;
+            }
+        }
+
+        function renderModalCropHealthChart(data) {
+            const ctx = document.getElementById('modalCropHealthChart');
+            if (!ctx) return;
+
+            // Destroy existing chart
+            if (modalCropHealthChart) {
+                modalCropHealthChart.destroy();
+            }
+
+            const labels = data.map(d => {
+                const date = new Date(d.date);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            const ndviData = data.map(d => d.ndvi);
+
+            // Create gradient
+            const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(0, 200, 83, 0.4)');
+            gradient.addColorStop(1, 'rgba(0, 200, 83, 0.05)');
+
+            modalCropHealthChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'NDVI',
+                        data: ndviData,
+                        borderColor: 'rgb(0, 200, 83)',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: 'rgb(0, 200, 83)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointHoverBackgroundColor: 'rgb(0, 200, 83)',
+                        pointHoverBorderColor: '#fff',
+                        pointHoverBorderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            cornerRadius: 8,
+                            titleFont: {
+                                size: 13,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 12
+                            },
+                            callbacks: {
+                                label: function (context) {
+                                    return 'NDVI: ' + context.parsed.y.toFixed(3);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                },
+                                color: 'var(--text-secondary)',
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: true,
+                                drawBorder: false,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                },
+                                color: 'var(--text-secondary)',
+                                callback: function (value) {
+                                    return value.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeIrrigationModal();
+                closeCropHealthModal();
+            }
+        });
+
+        // Load all data on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadRecentIrrigation();
+            loadCropHealth();
+        });
+
+        loadFields();
+    </script>
+</body>
+
+</html>

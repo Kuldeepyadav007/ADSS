@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - MapZest</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary-green: #00c853;
+            --primary-dark: #1b3b2f;
+            --bg-color: #f9f9f9;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --radius: 12px;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            --nav-height: 64px;
+        }
+
+        body.dark-mode {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --border-color: #333333;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Navbar */
+        header {
+            background: var(--card-bg);
+            height: var(--nav-height);
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .brand {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .brand span {
+            color: var(--primary-green);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            list-style: none;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: color 0.2s;
+            padding: 8px 0;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--primary-green);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-green);
+            border-radius: 2px;
+        }
+
+        /* Nav Right */
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--text-main);
+        }
+
+        /* Profile Dropdown */
+        .profile-dropdown {
+            position: relative;
+        }
+
+        .profile-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px;
+            border-radius: 20px;
+            transition: background 0.2s;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 14px;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(0, 200, 83, 0.08);
+        }
+
+        .user-info {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 4px;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 14px;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            border: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            background: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        .btn-primary {
+            background: var(--primary-green);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #00a844;
+            transform: translateY(-1px);
+        }
+
+        /* Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            min-height: 240px;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            border-color: var(--border-color);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .card-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            color: var(--border-color);
+            margin-bottom: 16px;
+        }
+
+        .empty-state-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .empty-state-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            max-width: 240px;
+            line-height: 1.5;
+        }
+
+        /* Specific Card Styles */
+        .map-card {
+            padding: 0;
+            overflow: hidden;
+            position: relative;
+            min-height: 240px;
+        }
+
+        #fieldsMap {
+            width: 100%;
+            height: 100%;
+            min-height: 240px;
+        }
+
+        .map-overlay-btn {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            background: var(--card-bg);
+            padding: 10px 14px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            cursor: pointer;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+
+        .map-overlay-btn:hover {
+            background: var(--primary-green);
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(0, 200, 83, 0.3);
+        }
+
+        /* Fullscreen map styles */
+        .map-card:fullscreen {
+            background: #000;
+        }
+
+        .map-card:fullscreen #fieldsMap {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .map-card:fullscreen .map-overlay-btn {
+            bottom: 24px;
+            right: 24px;
+        }
+
+        /* Field number labels */
+        .field-number-label {
+            cursor: pointer;
+        }
+
+        .field-number-label:hover div {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .crop-data-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 16px 0;
+        }
+
+        .crop-data-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .crop-header-right {
+            margin-left: auto;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .view-all-link {
+            margin-top: auto;
+            align-self: flex-start;
+            color: var(--primary-green);
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Disease Advice List */
+        .disease-list {
+            width: 100%;
+        }
+
+        .disease-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .dot-red {
+            background-color: #ff5252;
+        }
+
+        .dot-orange {
+            background-color: #ffb74d;
+        }
+
+        .dot-green {
+            background-color: #66bb6a;
+        }
+
+        .dot-grey {
+            background-color: #e0e0e0;
+        }
+
+        .chart-container {
+            width: 100px;
+            height: 100px;
+            margin-right: 24px;
+        }
+
+        .disease-layout {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0 16px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                padding: 0 16px;
+            }
+
+            .nav-left {
+                gap: 20px;
+            }
+
+            .brand span {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header>
+        <div class="nav-left">
+            <a href="/" class="brand" style="display:flex; align-items:center; gap:8px; text-decoration:none;">
+                <img src="./static/logo.png" alt="MapZest Logo" style="height:32px; width:auto;">
+
+            </a>
+            <ul class="nav-links">
+                <li><a href="/" class="nav-link active">Dashboard</a></li>
+                <li><a href="/fields" class="nav-link">Fields</a></li>
+            </ul>
+        </div>
+
+        <div class="nav-right">
+            <button class="theme-toggle" id="themeToggle" title="Toggle Dark Mode">
+                <i class="fas fa-moon"></i>
+            </button>
+
+            <div class="profile-dropdown">
+                <button class="profile-btn">
+                    <div class="avatar">
+                        {{ user.name[0] if user.name else user.email[0] | upper }}
+                    </div>
+                </button>
+                <div class="profile-menu">
+                    <div class="user-info">
+                        <div class="user-name">{{ user.name if user.name else 'User' }}</div>
+                        <div class="user-email">{{ user.email }}</div>
+                    </div>
+                    <a href="/logout" class="dropdown-item">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Dashboard</h1>
+            <div class="header-actions">
+                <button class="btn btn-outline">
+                    <i class="fas fa-sort"></i> Reorder cards
+                </button>
+                <button class="btn btn-primary" onclick="window.location.href='/create_field'">
+                    <i class="fas fa-plus"></i> New
+                </button>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+
+            <!-- Recommendations -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-user-check card-icon"></i>
+                    <span class="card-title">Recommendations</span>
+                </div>
+                <div class="card-body">
+                    <i class="far fa-clipboard empty-state-icon"></i>
+                    <div class="empty-state-title">No Recommendations</div>
+                    <div class="empty-state-text">Here you will see recommendations from your dealer</div>
+                </div>
+            </div>
+
+            <!-- Soil Moisture Status -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-tint card-icon"></i>
+                    <span class="card-title">Soil Moisture Status</span>
+                </div>
+                <div class="card-body">
+                    <i class="fas fa-layer-group empty-state-icon"></i>
+                    <div class="empty-state-title">Install a Sensor</div>
+                    <div class="empty-state-text">Need to install/register a sensor? Please use the CropX mobile app
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map -->
+            <div class="card map-card">
+                <div id="fieldsMap"></div>
+                <div class="map-overlay-btn" onclick="openFullscreenMap()" title="Toggle Fullscreen">
+                    <i class="fas fa-expand"></i>
+                </div>
+            </div>
+
+            <!-- N-Leaching -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-line card-icon"></i>
+                    <span class="card-title">N-Leaching</span>
+                </div>
+                <div class="card-body">
+                    <i class="fas fa-desktop empty-state-icon"></i>
+                    <div class="empty-state-title">Feature Unavailable</div>
+                    <div class="empty-state-text">Please use the CropX mobile app to install/register a sensor</div>
+                </div>
+            </div>
+
+            <!-- Sensors -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-wifi card-icon"></i>
+                    <span class="card-title">Sensors</span>
+                </div>
+                <div class="card-body">
+                    <i class="far fa-calendar-alt empty-state-icon"></i>
+                    <div class="empty-state-title">No Active Sensors</div>
+                    <div class="empty-state-text">Need to install/register a sensor? Please use the CropX mobile app
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crops -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-seedling card-icon"></i>
+                    <span class="card-title">Crops</span>
+                    <span class="crop-header-right" id="totalAreaText">Total: 0 acre</span>
+                </div>
+                <div class="card-body">
+                    <div class="crop-data-value" id="fieldCount">0</div>
+                    <div class="crop-data-label">Empty</div>
+                </div>
+                <a href="/app2" class="view-all-link">View All</a>
+            </div>
+
+            <!-- Disease Advice -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-virus card-icon"></i>
+                    <span class="card-title">Disease Advice</span>
+                </div>
+                <div class="card-body" style="flex-direction: row; justify-content: flex-start;">
+                    <div class="disease-layout">
+                        <div class="chart-container">
+                            <canvas id="diseaseChart"></canvas>
+                        </div>
+                        <div class="disease-list">
+                            <div class="disease-item">
+                                <span><span class="status-dot dot-red"></span>Spray now</span>
+                                <span>0 ></span>
+                            </div>
+                            <div class="disease-item">
+                                <span><span class="status-dot dot-orange"></span>Consider action</span>
+                                <span>0 ></span>
+                            </div>
+                            <div class="disease-item">
+                                <span><span class="status-dot dot-green"></span>All clear</span>
+                                <span>0 ></span>
+                            </div>
+                            <div class="disease-item">
+                                <span><span class="status-dot dot-grey"></span>No advice</span>
+                                <span id="noAdviceCount">0 ></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <a href="#" class="view-all-link">View all</a>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Dark Mode Logic
+        const themeToggle = document.getElementById('themeToggle');
+        const icon = themeToggle.querySelector('i');
+
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+
+            if (isDark) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        });
+
+        // Initialize map
+        const map = L.map('fieldsMap', {
+            zoomControl: false,
+            attributionControl: false
+        }).setView([20.5937, 78.9629], 4);
+
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19
+        }).addTo(map);
+
+        // Fullscreen function
+        function openFullscreenMap() {
+            const mapCard = document.querySelector('.map-card');
+            const btn = document.querySelector('.map-overlay-btn i');
+
+            if (!document.fullscreenElement) {
+                // Enter fullscreen
+                if (mapCard.requestFullscreen) {
+                    mapCard.requestFullscreen();
+                } else if (mapCard.webkitRequestFullscreen) {
+                    mapCard.webkitRequestFullscreen();
+                } else if (mapCard.msRequestFullscreen) {
+                    mapCard.msRequestFullscreen();
+                }
+
+                // Change icon to compress
+                btn.classList.remove('fa-expand');
+                btn.classList.add('fa-compress');
+            } else {
+                // Exit fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+
+                // Change icon back to expand
+                btn.classList.remove('fa-compress');
+                btn.classList.add('fa-expand');
+            }
+
+            // Resize map after entering/exiting fullscreen
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 100);
+        }
+
+        // Listen for fullscreen changes
+        document.addEventListener('fullscreenchange', () => {
+            const btn = document.querySelector('.map-overlay-btn i');
+            if (!document.fullscreenElement) {
+                btn.classList.remove('fa-compress');
+                btn.classList.add('fa-expand');
+            }
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 100);
+        });
+
+        // Register the center text plugin globally
+        const centerTextPlugin = {
+            id: 'centerText',
+            beforeDraw: function (chart) {
+                if (chart.config.type !== 'doughnut') return;
+
+                var width = chart.width,
+                    height = chart.height,
+                    ctx = chart.ctx;
+
+                ctx.restore();
+                var fontSize = (height / 80).toFixed(2);
+                ctx.font = "bold " + fontSize + "em sans-serif";
+                ctx.textBaseline = "middle";
+                ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text-main');
+
+                var text = chart.config.options.centerText || '0',
+                    textX = Math.round((width - ctx.measureText(text).width) / 2),
+                    textY = height / 2;
+
+                ctx.fillText(text, textX, textY);
+                ctx.save();
+            }
+        };
+
+
+        // Profile dropdown toggle
+        document.querySelector('.profile-btn').addEventListener('click', function (e) {
+            e.stopPropagation();
+            document.querySelector('.profile-menu').classList.toggle('show');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            const profileMenu = document.querySelector('.profile-menu');
+            const profileDropdown = document.querySelector('.profile-dropdown');
+            if (!profileDropdown.contains(e.target)) {
+                profileMenu.classList.remove('show');
+            }
+        });
+
+        // Load and display fields
+        async function loadFields() {
+            try {
+                const response = await fetch('/api/get_fields');
+                const fields = await response.json();
+
+                // Update field count and area
+                const count = fields.length;
+                document.getElementById('fieldCount').textContent = count;
+                document.getElementById('noAdviceCount').textContent = `${count} >`;
+
+                let totalArea = 0;
+                fields.forEach(f => totalArea += (f.areaAcres || 0));
+                document.getElementById('totalAreaText').textContent = `Total: ${totalArea.toFixed(1)} acre`;
+
+                // Update chart
+                updateChart(count);
+
+                // Display fields on map with numbers
+                if (fields.length > 0) {
+                    const bounds = [];
+                    fields.forEach((field, index) => {
+                        let layer;
+                        const fieldNumber = index + 1;
+
+                        if (field.type === 'circle') {
+                            layer = L.circle(field.geometry.center, {
+                                radius: field.geometry.radius,
+                                color: 'white',
+                                weight: 2,
+                                fillOpacity: 0
+                            }).addTo(map);
+                            bounds.push(field.geometry.center);
+
+                            // Add field number label
+                            const marker = L.marker(field.geometry.center, {
+                                icon: L.divIcon({
+                                    className: 'field-number-label',
+                                    html: `<div style="background: rgba(0,200,83,0.95); color: white; padding: 6px 12px; border-radius: 16px; font-weight: bold; font-size: 14px; box-shadow: 0 3px 8px rgba(0,0,0,0.4); transition: all 0.2s; cursor: pointer; border: 2px solid white;">${fieldNumber}</div>`,
+                                    iconSize: [40, 40]
+                                })
+                            }).addTo(map);
+
+                            // Click handler for marker
+                            marker.on('click', () => {
+                                window.location.href = `/app2?field_id=${field.id}`;
+                            });
+
+                        } else {
+                            layer = L.geoJSON(field.geometry, {
+                                style: {
+                                    color: 'white',
+                                    weight: 2,
+                                    fillOpacity: 0
+                                }
+                            }).addTo(map);
+
+                            const coords = field.geometry.coordinates[0];
+                            coords.forEach(coord => {
+                                bounds.push([coord[1], coord[0]]);
+                            });
+
+                            // Calculate center for label
+                            const center = layer.getBounds().getCenter();
+                            const marker = L.marker(center, {
+                                icon: L.divIcon({
+                                    className: 'field-number-label',
+                                    html: `<div style="background: rgba(0,200,83,0.95); color: white; padding: 6px 12px; border-radius: 16px; font-weight: bold; font-size: 14px; box-shadow: 0 3px 8px rgba(0,0,0,0.4); transition: all 0.2s; cursor: pointer; border: 2px solid white;">${fieldNumber}</div>`,
+                                    iconSize: [40, 40]
+                                })
+                            }).addTo(map);
+
+                            // Click handler for marker
+                            marker.on('click', () => {
+                                window.location.href = `/app2?field_id=${field.id}`;
+                            });
+                        }
+
+                        // Click to navigate
+                        layer.on('click', () => {
+                            window.location.href = `/app2?field_id=${field.id}`;
+                        });
+                    });
+                    map.fitBounds(bounds, { padding: [20, 20] });
+                }
+            } catch (error) {
+                console.error('Error loading fields:', error);
+            }
+        }
+
+        function updateChart(totalFields) {
+            const ctx = document.getElementById('diseaseChart').getContext('2d');
+
+            if (window.diseaseChartInstance) {
+                window.diseaseChartInstance.destroy();
+            }
+
+            window.diseaseChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['No advice', 'Other'],
+                    datasets: [{
+                        data: [totalFields, 0],
+                        backgroundColor: ['#e0e0e0', '#ffffff'],
+                        borderWidth: 0,
+                        cutout: '80%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    centerText: totalFields.toString(),
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    }
+                },
+                plugins: [centerTextPlugin]
+            });
+        }
+
+        loadFields();
+    </script>
+</body>
+
+</html>

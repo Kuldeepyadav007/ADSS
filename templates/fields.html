@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fields - MapZest</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-green: #00c853;
+            --card-bg: #ffffff;
+            --bg-color: #f9f9f9;
+            --text-main: #333333;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --radius: 12px;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark-mode {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --border-color: #333333;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Navbar */
+        header {
+            background: var(--card-bg);
+            height: 64px;
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .brand {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .brand span {
+            color: var(--primary-green);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            list-style: none;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: color 0.2s;
+            padding: 8px 0;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--primary-green);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-green);
+            border-radius: 2px;
+        }
+
+        /* Nav Right */
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--text-main);
+        }
+
+        /* Profile Dropdown */
+        .profile-dropdown {
+            position: relative;
+        }
+
+        .profile-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px;
+            border-radius: 20px;
+            transition: background 0.2s;
+        }
+
+        .profile-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--primary-green);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .profile-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--card-bg);
+            min-width: 200px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--border-color);
+            padding: 8px 0;
+            display: none;
+            z-index: 1100;
+            margin-top: 12px;
+        }
+
+        .profile-dropdown.active .profile-menu {
+            display: block;
+            animation: slideDown 0.2s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-item {
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 14px;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(0, 200, 83, 0.08);
+        }
+
+        .user-info {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 4px;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 14px;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .btn-primary {
+            background: var(--primary-green);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: #00a844;
+            transform: translateY(-1px);
+        }
+
+        .fields-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .field-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .field-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .field-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .field-meta {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .field-stats {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header>
+        <div class="nav-left">
+            <a href="/" class="brand" style="display:flex; align-items:center; gap:8px; text-decoration:none;">
+                <img src="./static/logo.png" alt="MapZest Logo" style="height:32px; width:auto;">
+
+            </a>
+            <ul class="nav-links">
+                <li><a href="/" class="nav-link">Dashboard</a></li>
+                <li><a href="/fields" class="nav-link active">Fields</a></li>
+            </ul>
+        </div>
+
+        <div class="nav-right">
+            <button class="theme-toggle" id="themeToggle" title="Toggle Dark Mode">
+                <i class="fas fa-moon"></i>
+            </button>
+
+            <div class="profile-dropdown">
+                <button class="profile-btn">
+                    <div class="avatar">
+                        {{ user.name[0] if user.name else user.email[0] | upper }}
+                    </div>
+                </button>
+                <div class="profile-menu">
+                    <div class="user-info">
+                        <div class="user-name">{{ user.name if user.name else 'User' }}</div>
+                        <div class="user-email">{{ user.email }}</div>
+                    </div>
+                    <a href="/logout" class="dropdown-item">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="header">
+            <h1 class="page-title">My Fields</h1>
+            <a href="/create_field" class="btn-primary">
+                <i class="fas fa-plus"></i> New Field
+            </a>
+        </div>
+
+        <div class="fields-grid" id="fieldsGrid">
+            <!-- Fields will be loaded here -->
+            <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-secondary);">
+                Loading fields...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark Mode Logic
+        const themeToggle = document.getElementById('themeToggle');
+        const icon = themeToggle.querySelector('i');
+
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+
+            if (isDark) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        });
+
+        // Profile Dropdown Logic
+        const profileBtn = document.querySelector('.profile-btn');
+        const profileDropdown = document.querySelector('.profile-dropdown');
+
+        profileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!profileDropdown.contains(e.target)) {
+                profileDropdown.classList.remove('active');
+            }
+        });
+
+        async function loadFields() {
+            try {
+                const response = await fetch('/api/get_fields');
+                const fields = await response.json();
+
+                const grid = document.getElementById('fieldsGrid');
+
+                if (fields.length === 0) {
+                    grid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                            <i class="fas fa-seedling" style="font-size: 48px; color: #e0e0e0; margin-bottom: 16px;"></i>
+                            <h3>No fields yet</h3>
+                            <p style="color: var(--text-secondary);">Create your first field to get started</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                grid.innerHTML = fields.map(field => `
+                    <div class="field-card" onclick="window.location.href='/app2?field_id=${field.id}'">
+                        <div class="field-name">
+                            <i class="fas fa-map-marker-alt" style="color: var(--primary-green);"></i>
+                            ${field.name}
+                        </div>
+                        <div class="field-meta">
+                            Created on ${new Date(field.created_at).toLocaleDateString()}
+                        </div>
+                        <div class="field-stats">
+                            <div class="stat-item">
+                                <span class="stat-value">${field.areaAcres ? field.areaAcres.toFixed(2) : '-'}</span>
+                                <span class="stat-label">Acres</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value">${field.areaHectares ? field.areaHectares.toFixed(2) : '-'}</span>
+                                <span class="stat-label">Hectares</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error loading fields:', error);
+                document.getElementById('fieldsGrid').innerHTML = `
+                    <div style="color: red; text-align: center;">Error loading fields. Please try again.</div>
+                `;
+            }
+        }
+
+        loadFields();
+    </script>
+</body>
+
+</html>
